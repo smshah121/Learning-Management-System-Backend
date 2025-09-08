@@ -7,7 +7,6 @@ import { Lecture } from './src/lectures/entities/lecture.entity';
 import { Enrollment } from './src/enrollments/entities/enrollment.entity';
 import { Announcement } from './src/announcement/entities/announcement.entity';
 
-
 dotenv.config();
 
 export const AppDataSource = new DataSource({
@@ -17,8 +16,10 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  entities: [User, Course, Lecture, Enrollment, Announcement], // explicitly imported
-  migrations: ['src/migrations/*.ts'], // for dev (TypeScript)
+  entities: [User, Course, Lecture, Enrollment, Announcement],
+  migrations: process.env.NODE_ENV === 'production'
+    ? ['dist/migrations/*.js']
+    : ['src/migrations/*.ts'],
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-  synchronize: false, // ⚠️ never true in production
+  synchronize: false,
 });
