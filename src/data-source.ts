@@ -1,11 +1,11 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
-import { User } from './src/user/entities/user.entity';
-import { Course } from './src/courses/entities/course.entity';
-import { Lecture } from './src/lectures/entities/lecture.entity';
-import { Enrollment } from './src/enrollments/entities/enrollment.entity';
-import { Announcement } from './src/announcement/entities/announcement.entity';
+import { User } from './user/entities/user.entity';
+import { Course } from './courses/entities/course.entity';
+import { Lecture } from './lectures/entities/lecture.entity';
+import { Enrollment } from './enrollments/entities/enrollment.entity';
+import { Announcement } from './announcement/entities/announcement.entity';
 
 dotenv.config();
 
