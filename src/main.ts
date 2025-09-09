@@ -7,13 +7,15 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.useGlobalPipes(new ValidationPipe({whitelist: true}))
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   app.enableCors({
-    origin: "*"
-  })
+    origin: '*',
+  });
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-  prefix: '/uploads',
-});
-  await app.listen(process.env.PORT ?? 3000);
+    prefix: '/uploads',
+  });
+  const port = process.env.PORT || 3000;
+  await app.listen(port, '0.0.0.0'); // crucial for cloud deployment
+  console.log(`Backend running on port ${port}`);
 }
 bootstrap();
