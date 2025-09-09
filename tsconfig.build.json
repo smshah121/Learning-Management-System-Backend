@@ -1,4 +1,9 @@
 {
   "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "deleteOutDir": true,
+    "module": "commonjs"
+  },
   "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
 }
