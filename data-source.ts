@@ -17,9 +17,7 @@ export const AppDataSource = new DataSource({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   entities: [User, Course, Lecture, Enrollment, Announcement],
-  migrations: process.env.NODE_ENV === 'production'
-    ? ['dist/migrations/*.js']
-    : ['src/migrations/*.ts'],
+  migrations: ["src/migrations/*.ts"],
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
   synchronize: false,
 });
