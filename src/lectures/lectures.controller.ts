@@ -1,75 +1,89 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, UploadedFiles } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Body,
+  UseGuards,
+  Req,
+  Delete,
+  Patch,
+  UseInterceptors,
+  UploadedFile,
+  NotFoundException,
+  ParseIntPipe,
+} from '@nestjs/common';
+import { Express, Request } from 'express';
 import { LecturesService } from './lectures.service';
 import { CreateLectureDto } from './dto/create-lecture.dto';
 import { UpdateLectureDto } from './dto/update-lecture.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-guard';
-import { RolesGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
+import { RolesGuard } from 'src/common/guards/role.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-guard';
 import { UserRole } from 'src/common/enums/user-role.enum';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import * as path from 'path';
-import { diskStorage } from 'multer';
-import { v4 as uuidv4 } from 'uuid';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+
 @Controller('lectures')
 export class LecturesController {
   constructor(private readonly lecturesService: LecturesService) {}
+
+  // ✅ Create Lecture
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.INSTRUCTOR)
   @Post()
-  @UseInterceptors(FileFieldsInterceptor(
-    [{ name: 'docs', maxCount: 5 }],
-    {
-      storage: diskStorage({
-        destination: './uploads/docs',
-        filename: (req, file, cb) => {
-          const unique = `${uuidv4()}${path.extname(file.originalname)}`;
-          cb(null, unique);
-        },
-      }),
-    }
-  ))
-  create(@Body() createLectureDto: CreateLectureDto,
-  @UploadedFiles() files: { docs?: Express.Multer.File[] },
-){
-    const docPaths = files?.docs?.map(file => `/uploads/docs/${file.filename}`) || [];
-  return this.lecturesService.create({
-    ...createLectureDto,
-    docs: docPaths,
-  });
-  }
-  
-  @UseGuards(JwtAuthGuard)
-  @Get("/course/:id")
-  findByCourse(@Param("id")id: string){
-    return this.lecturesService.findByCourse(+id)
+  create(@Body() dto: CreateLectureDto) {
+    return this.lecturesService.create(dto);
   }
 
-  @UseGuards(JwtAuthGuard)
-@Get(':id')
-findOne(@Param('id') id: string) {
-  return this.lecturesService.findOne(+id);
-}
-
-  @UseGuards(JwtAuthGuard,RolesGuard)
-  @Roles(UserRole.INSTRUCTOR)
-  @Patch(":id")
-  update(@Param("id") id: string, @Body() updateLectureDto: UpdateLectureDto){
-    return this.lecturesService.update(+id,updateLectureDto)
-  }
-
-  @Delete(":id")
+  // ✅ Upload Docs for a Lecture
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.INSTRUCTOR)
-  remove(@Param("id") id:string){
-    return this.lecturesService.removeLecture(+id)
-    
+  @Post(':id/docs')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(), // keep file in memory
+      limits: { fileSize: 20 * 1024 * 1024 }, // optional: max 20MB
+    }),
+  )
+  async uploadDocs(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new NotFoundException('No file uploaded');
+    return this.lecturesService.addDoc(id, file); // service will handle Cloudinary
   }
 
-  
+  // ✅ Get lectures by course
+  @UseGuards(JwtAuthGuard)
+  @Get('/course/:id')
+  findByCourse(@Param('id', ParseIntPipe) id: number) {
+    return this.lecturesService.findByCourse(id);
+  }
+
+  // ✅ Get single lecture
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.lecturesService.findOne(id);
+  }
+
+  // ✅ Update Lecture
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.INSTRUCTOR)
+  @Patch(':id')
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateLectureDto,
+  ) {
+    return this.lecturesService.update(id, dto);
+  }
+
+  // ✅ Delete Lecture
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.INSTRUCTOR)
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.lecturesService.removeLecture(id);
+  }
 }
-
-
-
-
-
-

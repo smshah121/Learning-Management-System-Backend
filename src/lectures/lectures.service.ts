@@ -1,64 +1,90 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateLectureDto } from './dto/create-lecture.dto';
-import { UpdateLectureDto } from './dto/update-lecture.dto';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Lecture } from './entities/lecture.entity';
 import { Course } from 'src/courses/entities/course.entity';
-import { Repository } from 'typeorm';
+import { CreateLectureDto } from './dto/create-lecture.dto';
+import { UpdateLectureDto } from './dto/update-lecture.dto';
+import cloudinary from 'src/common/cloudinary/cloudinary.config';
+import * as streamifier from 'streamifier';
 
 @Injectable()
 export class LecturesService {
   constructor(
-    @InjectRepository(Lecture) private lectureRepository: Repository<Lecture>,
-    @InjectRepository(Course) private courseRepository: Repository<Course>
-  ){}
-  async create(createLectureDto: CreateLectureDto) {
-  const course = await this.courseRepository.findOne({
-    where: { id: createLectureDto.courseId },
-  });
+    @InjectRepository(Lecture) private lectureRepo: Repository<Lecture>,
+    @InjectRepository(Course) private courseRepo: Repository<Course>,
+  ) {}
 
-  if (!course) throw new NotFoundException('Course not found');
+  async create(dto: CreateLectureDto) {
+    const course = await this.courseRepo.findOne({ where: { id: dto.courseId } });
+    if (!course) throw new NotFoundException('Course not found');
 
-  const lecture = this.lectureRepository.create({
-    title: createLectureDto.title,
-    docs: createLectureDto.docs || [],
-    course,
-  });
+    const lecture = this.lectureRepo.create({
+      title: dto.title,
+      docs: [], // start empty
+      course,
+    });
 
-  return this.lectureRepository.save(lecture);
-}
+    return this.lectureRepo.save(lecture);
+  }
+
+  async addDoc(lectureId: number, file: Express.Multer.File) {
+    const lecture = await this.lectureRepo.findOne({ where: { id: lectureId } });
+    if (!lecture) throw new NotFoundException('Lecture not found');
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'lectures' },
+          async (error, result) => {
+            if (error) return reject(error);
+            if (!result?.secure_url) return reject(new Error('Cloudinary upload failed'));
+
+            // push new doc URL into lecture.docs
+            lecture.docs = [...(lecture.docs || []), result.secure_url];
+            const updatedLecture = await this.lectureRepo.save(lecture);
+
+            resolve(updatedLecture);
+          },
+        );
+
+        streamifier.createReadStream(file.buffer).pipe(uploadStream);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  async update(id: number, dto: UpdateLectureDto) {
+    const lecture = await this.lectureRepo.findOne({ where: { id } });
+    if (!lecture) throw new NotFoundException('Lecture not found');
+
+    Object.assign(lecture, dto);
+    return this.lectureRepo.save(lecture);
+  }
 
   async findByCourse(courseId: number) {
-  console.log("🔍 Fetching lectures for course ID:", courseId);
-
-  return this.lectureRepository.find({
-  where: { course: { id: courseId } },
-  relations: ['course'],
-});
-
-}
-
-
-  async update(id:number, updateLectureDto: UpdateLectureDto){
-    const lecture = await this.lectureRepository.findOne({where: {id}, relations: ["course"]})
-    if(!lecture) throw new NotFoundException("lecture not found")
-    Object.assign(lecture,updateLectureDto)
-    return this.lectureRepository.save(lecture)
-  } 
-
-  async findOne(id: number){
-    const lecture = await this.lectureRepository.findOne({where: {id}})
-    if(!lecture) throw new NotFoundException("lecture not found")
-    return lecture
-
+    return this.lectureRepo.find({
+      where: { course: { id: courseId } },
+      relations: ['course'],
+    });
   }
 
-  async removeLecture(id: number){
-    const lecture = await this.lectureRepository.find({where: {id}})
-    if (!lecture) throw new NotFoundException("lecture not found")
-    return this.lectureRepository.remove(lecture)
-
+  async findOne(id: number) {
+    return this.lectureRepo.findOne({ where: { id }, relations: ['course'] });
   }
 
-  
+  async removeLecture(id: number) {
+    const lecture = await this.lectureRepo.findOne({ where: { id } });
+    if (!lecture) throw new NotFoundException('Lecture not found');
+    return this.lectureRepo.remove(lecture);
+  }
+
+  async removeDoc(lectureId: number, docUrl: string) {
+    const lecture = await this.lectureRepo.findOne({ where: { id: lectureId } });
+    if (!lecture) throw new NotFoundException('Lecture not found');
+
+    lecture.docs = lecture.docs.filter((url) => url !== docUrl);
+    return this.lectureRepo.save(lecture);
+  }
 }
