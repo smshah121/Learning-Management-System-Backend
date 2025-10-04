@@ -9,9 +9,9 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   app.enableCors({
     origin: ["https://singular-toffee-702de6.netlify.app/"],
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true, // allows cookies/auth headers
-    allowedHeaders: 'Content-Type, Accept, Authorization',
+    // methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    // credentials: true, // allows cookies/auth headers
+    // allowedHeaders: 'Content-Type, Accept, Authorization',
   });
   
   const port = process.env.PORT || 3000;
