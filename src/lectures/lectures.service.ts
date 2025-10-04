@@ -36,7 +36,7 @@ export class LecturesService {
       try {
         const uploadStream = cloudinary.uploader.upload_stream(
           { folder: 'lectures',
-            resource_type: 'raw', 
+            resource_type: 'auto', 
            },
           async (error, result) => {
             if (error) return reject(error);
