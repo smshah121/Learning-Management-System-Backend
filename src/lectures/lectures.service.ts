@@ -35,7 +35,9 @@ export class LecturesService {
     return new Promise(async (resolve, reject) => {
       try {
         const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: 'lectures' },
+          { folder: 'lectures',
+            resource_type: 'raw', 
+           },
           async (error, result) => {
             if (error) return reject(error);
             if (!result?.secure_url) return reject(new Error('Cloudinary upload failed'));
