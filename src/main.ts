@@ -8,12 +8,12 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   app.enableCors({
-    origin: ["https://singular-toffee-702de6.netlify.app"],
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true, // allows cookies/auth headers
-    allowedHeaders: 'Content-Type, Accept, Authorization',
+    origin: ['https://singular-toffee-702de6.netlify.app'],
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
   });
-  
+
   const port = process.env.PORT || 3000;
   await app.listen(port, '0.0.0.0'); // crucial for cloud deployment
   console.log(`Backend running on port ${port}`);
