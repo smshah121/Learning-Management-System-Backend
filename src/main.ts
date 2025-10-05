@@ -12,6 +12,8 @@ async function bootstrap() {
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
+    preflightContinue: false, // let NestJS handle OPTIONS
+    optionsSuccessStatus: 204, // return OK for preflight
   });
 
   const port = process.env.PORT || 3000;
