@@ -9,7 +9,7 @@ async function bootstrap() {
   
   // 1. Environment Variable for Origin (Best Practice)
   // Ensure CORS_ORIGIN is set in your Render environment variables.
-  const allowedOrigin = process.env.CORS_ORIGIN || 'https://singular-toffee-702de6.netlify.app';
+  const allowedOrigin = process.env.CORS_ORIGIN || 'https://learning-management-system-app1.netlify.app';
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
